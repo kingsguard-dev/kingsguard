@@ -15,9 +15,12 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "release:add-change": "changeset",
+    "release:status": "changeset status"
   },
   "devDependencies": {
+    "@changesets/cli": "3.0.3",
     "@eslint/js": "^10.0.1",
     "@typescript-eslint/parser": "^8.70.0",
     "@typescript-eslint/rule-tester": "^8.70.0",

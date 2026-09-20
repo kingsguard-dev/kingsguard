@@ -7,7 +7,8 @@ that helps keep UI state declarative, starting with React.
 
 ## Development
 
-Requires Node.js 22.12+ and pnpm 10.12.1 (see `packageManager`).
+Use Node.js 24 with pnpm 10.12.1 (see `packageManager`) for development.
+The published plugin has its own runtime requirements.
 
 ```sh
 pnpm install
