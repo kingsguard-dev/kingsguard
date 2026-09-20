@@ -125,7 +125,8 @@ starting with React.
 - Report checks actually run and their results. Clearly label pending checks or
   reviews. Mention relevant limitations and deferred work without implying that
   they are implemented.
-- Keep the description aligned with the final diff after scope or naming changes.
+- Keep the description aligned with the PR's complete diff against its target
+  branch, not just the latest commit. Update it whenever the PR's scope changes.
 
 ## After a pull request is merged
 
