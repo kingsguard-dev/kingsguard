@@ -102,14 +102,14 @@ starting with React.
 
 ## Pull request titles
 
-- Use `type(scope): description` for every PR title, written in English.
+- Use `type: description` for every PR title, written in English.
 - Choose a lowercase type: `feat`, `fix`, `docs`, `test`, `ci`, `chore`, or
-  `refactor`. Use a short scope that identifies the affected feature or area.
+  `refactor`.
 - Start the description with an imperative verb and state the concrete change.
   Keep it concise and update it if the PR scope changes.
-- Examples: `chore(release): set up Changesets`,
-  `ci(macos): test on Node 22 and 24`, and
-  `docs(agents): require release change records`.
+- Examples: `chore: set up Changesets`,
+  `ci: test on Node 22 and 24`, and
+  `docs: require release change records`.
 - This convention applies to PR titles; it does not change branch naming or
   determine package version bumps.
 
