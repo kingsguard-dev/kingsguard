@@ -122,9 +122,9 @@ starting with React.
 - Describe concrete behavior with short paragraphs or bullets. Use a table when
   comparing several commands and their purposes. Avoid dense implementation
   detail, unexplained jargon, and conversational history.
-- Report checks actually run and their results. Link CI evidence when available,
-  and clearly label pending checks or reviews. Mention relevant limitations and
-  deferred work without implying that they are implemented.
+- Report checks actually run and their results. Clearly label pending checks or
+  reviews. Mention relevant limitations and deferred work without implying that
+  they are implemented.
 - Keep the description aligned with the final diff after scope or naming changes.
 
 ## After a pull request is merged
