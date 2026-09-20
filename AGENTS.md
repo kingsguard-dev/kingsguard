@@ -128,6 +128,11 @@ starting with React.
 - Keep the description aligned with the PR's complete diff against its target
   branch, not just the latest commit. Update it whenever the PR's scope changes.
 
+## Pull request merging
+
+- Use squash merge for all pull requests. Do not use merge commits or rebase
+  merging. Merge only when explicitly requested.
+
 ## After a pull request is merged
 
 - Verify that the PR is merged, then clean up its remote branch, local task
@@ -136,8 +141,10 @@ starting with React.
   or unrelated work.
 - Before deleting local resources, check for uncommitted or untracked work and
   commits added after the merged PR head. Preserve any such work and report what
-  prevented cleanup. Verify the PR head when squash or rebase merging makes Git
-  ancestry checks insufficient; do not force removal merely to bypass a warning.
+  prevented cleanup. Squash merging creates a new commit, so do not rely solely
+  on Git ancestry checks. Compare the task branch tip with the merged PR's final
+  head commit; retain the branch if they differ or cannot be verified. Do not
+  force removal merely to bypass a warning.
 - Run worktree removal from another checkout. Keep the primary project directory;
   if it is on the merged task branch, switch it to the default branch only when
   safe before deleting the task branch. Never remove a worktree still in use by
