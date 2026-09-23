@@ -12,8 +12,10 @@ pnpm build
 pnpm --filter @kingsguard/eslint-plugin-sentinel-react pack
 ```
 
-Install the generated tarball into a consuming project with ESLint 10 and a
-compatible TypeScript version (currently `>=4.8.4 <6.1.0`). The package is ESM-only
+Install the generated tarball into a consuming project with ESLint 8.57+, 9, or 10
+and a compatible TypeScript version (currently `>=4.8.4 <6.1.0`). The supported
+ESLint range is for flat config only; the packed package is checked with ESLint
+8.57.0, 8.57.1, 9.39.5, and 10.10.0 on Node 22 and 24. The package is ESM-only
 and requires Node.js 22.12+.
 
 ```js
@@ -40,8 +42,10 @@ The flat React preset enables all three rules at error severity:
 - `@kingsguard/react/no-computed-style`
 
 No type-aware linting or React runtime dependency is required.
-Legacy `.eslintrc` configuration is not supported. Use the flat preset
-`sentinel.configs.recommended`.
+Legacy `.eslintrc` configuration and plugin loading are not supported. Use the
+flat preset `sentinel.configs.recommended`. For ESLint 8, set
+`ESLINT_USE_FLAT_CONFIG=true` when invoking ESLint; the compatibility matrix
+checks this explicit flat-config path rather than default config discovery.
 The React preset belongs to this plugin; it does not require separate
 `@kingsguard/core` or `@kingsguard/axe` packages.
 
