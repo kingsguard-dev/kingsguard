@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { runCli } from '../src/cli.js';
 
+const testVersion = '9.8.7-test';
+
 function execute(args: string[]) {
   const stdout: string[] = [];
   const stderr: string[] = [];
@@ -8,6 +10,7 @@ function execute(args: string[]) {
     args,
     (text) => stdout.push(text),
     (text) => stderr.push(text),
+    testVersion,
   );
   return { exitCode, stdout: stdout.join(''), stderr: stderr.join('') };
 }
@@ -28,7 +31,7 @@ describe('Kingsguard CLI entry', () => {
   it('prints the package version', () => {
     expect(execute(['--version'])).toEqual({
       exitCode: 0,
-      stdout: '0.1.0\n',
+      stdout: `${testVersion}\n`,
       stderr: '',
     });
   });

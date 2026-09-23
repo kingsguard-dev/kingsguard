@@ -62,11 +62,20 @@ describe('packed CLI', () => {
 
       writeFileSync(sentinelPath, 'unchanged');
       const executable = join(installPrefix, 'node_modules/.bin/kingsguard');
+      const installedPackage = join(
+        installPrefix,
+        'node_modules/@kingsguard/cli',
+      );
+      const installedManifest = JSON.parse(
+        readFileSync(join(installedPackage, 'package.json'), 'utf8'),
+      ) as { version: string; bin: Record<string, string> };
 
       expect(run(executable, ['--help'], callerDirectory)).toContain(
         'Unavailable',
       );
-      expect(run(executable, ['--version'], callerDirectory)).toBe('0.1.0\n');
+      expect(run(executable, ['--version'], callerDirectory)).toBe(
+        `${installedManifest.version}\n`,
+      );
       const initResult = capture(executable, ['init'], callerDirectory);
       expect(initResult).toEqual({
         status: 1,
@@ -76,20 +85,13 @@ describe('packed CLI', () => {
       expect(capture(executable, ['wat'], callerDirectory).status).toBe(2);
       expect(readFileSync(sentinelPath, 'utf8')).toBe('unchanged');
 
-      const installedPackage = join(
-        installPrefix,
-        'node_modules/@kingsguard/cli',
-      );
       expect(statSync(join(installedPackage, 'LICENSE')).isFile()).toBe(true);
       expect(statSync(join(installedPackage, 'README.md')).isFile()).toBe(true);
       expect(statSync(join(installedPackage, 'dist/bin.js')).isFile()).toBe(
         true,
       );
       expect(readdirSync(installedPackage)).not.toContain('src');
-      expect(
-        JSON.parse(readFileSync(join(installedPackage, 'package.json'), 'utf8'))
-          .bin,
-      ).toEqual({
+      expect(installedManifest.bin).toEqual({
         kingsguard: './dist/bin.js',
       });
     } finally {

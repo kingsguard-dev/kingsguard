@@ -19,7 +19,7 @@ export function runCli(
   args: string[],
   stdout: OutputSink,
   stderr: OutputSink,
-  version = '0.1.0',
+  version: string,
 ): number {
   if (
     args.length === 0 ||
