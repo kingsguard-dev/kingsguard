@@ -56,6 +56,10 @@ The workspace starts with one real package, `@kingsguard/eslint-plugin-sentinel-
 See its [setup instructions](packages/sentinel-react/README.md) and the first rule,
 [no-dom-state](docs/rules/no-dom-state.md).
 
+The minimal `@kingsguard/cli` package currently supports `--help` and `--version`.
+Its `init` command is not implemented and does not inspect or modify a project.
+See [CLI package instructions](packages/cli/README.md).
+
 Angular, Vue, and axe-core are future work, not implemented integrations.
 See the [architecture notes](docs/architecture.md) before extending the project.
 

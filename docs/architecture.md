@@ -42,8 +42,10 @@ calls, reads, and writes have distinct permissions. Unknown members are denied.
 Node aliases, reflection on bare nodes, and interprocedural behavior remain
 detection gaps; effects and third-party calls are not automatic exemptions.
 
-Release automation, dual CommonJS output, a CLI, and placeholder framework packages
-are deliberately deferred until there is a concrete consumer.
+Release automation, dual CommonJS output, and placeholder framework packages are
+deliberately deferred until there is a concrete consumer. The minimal `@kingsguard/cli`
+package currently provides only help and version output; its `init` command is an
+explicitly unavailable entry point and does not inspect or modify a project.
 
 The computed-style guard is a separate global-browser rule: it resolves lexical
 bindings for browser APIs without requiring React ref or JSX ownership. Its
