@@ -86,10 +86,10 @@ function lint(consumer, ext, mode, input, expectedIds) {
         severity,
         fatal: Boolean(fatal),
       }))
-      .sort((a, b) => a.ruleId.localeCompare(b.ruleId)),
+      .sort((a, b) => String(a.ruleId).localeCompare(String(b.ruleId))),
     expectedIds
       .map((ruleId) => ({ ruleId, severity, fatal: false }))
-      .sort((a, b) => a.ruleId.localeCompare(b.ruleId)),
+      .sort((a, b) => String(a.ruleId).localeCompare(String(b.ruleId))),
     `${ext}/${mode}: unexpected diagnostics`,
   );
 }
