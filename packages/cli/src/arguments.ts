@@ -1,5 +1,5 @@
 export const cliArguments = {
-  help: { name: '--help', alias: 'help', description: 'Show this help' },
+  help: { name: '--help', description: 'Show this help' },
   version: { name: '--version', description: 'Show the CLI version' },
 };
 
@@ -10,11 +10,7 @@ export enum CliRequest {
 }
 
 export function parseArguments(args: string[]): CliRequest {
-  if (
-    args.length === 0 ||
-    args.includes(cliArguments.help.name) ||
-    args.includes(cliArguments.help.alias)
-  ) {
+  if (args.length === 0 || args.includes(cliArguments.help.name)) {
     return CliRequest.Help;
   }
   if (args.includes(cliArguments.version.name)) {

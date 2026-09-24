@@ -20,17 +20,11 @@ describe('Kingsguard CLI entry', () => {
     [
       [],
       ['--help'],
-      ['help'],
       ['--help', '--other'],
       ['--other', '--help', '--abc'],
       ['--other', '--abc', '--help'],
-      ['help', '--other'],
-      ['--other', 'help', '--abc'],
-      ['--other', '--abc', 'help'],
       ['--version', '--help'],
       ['--help', '--version'],
-      ['--version', 'help'],
-      ['help', '--version'],
       ['--help', '--help'],
     ].map((args) => ({ args })),
   )('prints help for $args', ({ args }) => {
@@ -47,6 +41,8 @@ describe('Kingsguard CLI entry', () => {
   it.each(
     [
       ['--version'],
+      ['help', '--version'],
+      ['--version', 'help'],
       ['--version', '--other'],
       ['--other', '--version', '--abc'],
       ['--other', '--abc', '--version'],
@@ -63,6 +59,8 @@ describe('Kingsguard CLI entry', () => {
   it.each(
     [
       ['unknown'],
+      ['help'],
+      ['--other', 'help'],
       ['--unknown'],
       ['init'],
       ['init', 'extra'],

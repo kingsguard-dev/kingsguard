@@ -81,7 +81,7 @@ describe('packed CLI', () => {
         [],
         ['--other', '--help'],
         ['--version', '--help'],
-        ['help', '--version'],
+        ['--help', '--version'],
       ]) {
         expect(capture(executable, args, callerDirectory)).toEqual(help);
       }
@@ -92,7 +92,7 @@ describe('packed CLI', () => {
           stderr: '',
         });
       }
-      for (const args of [['wat'], ['init']]) {
+      for (const args of [['wat'], ['init'], ['help']]) {
         expect(capture(executable, args, callerDirectory)).toEqual({
           status: 2,
           stdout: '',
