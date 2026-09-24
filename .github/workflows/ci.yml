@@ -51,9 +51,12 @@ jobs:
   check-windows:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         node: [22, 24]
     steps:
+      - name: Preserve repository line endings
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
