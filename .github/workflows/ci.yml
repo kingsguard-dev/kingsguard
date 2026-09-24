@@ -19,7 +19,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
-      - run: pnpm --filter @kingsguard/eslint-plugin-sentinel-react pack
+      - name: Check packed ESLint consumers
+        run: node tests/consumer-compat.mjs
       - name: Collect coverage
         if: matrix.node == 24
         run: pnpm test:coverage
