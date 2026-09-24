@@ -48,3 +48,19 @@ jobs:
       - run: pnpm check
       - name: Pack React plugin
         run: pnpm --filter @kingsguard/eslint-plugin-sentinel-react pack
+  check-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - name: Pack React plugin
+        run: pnpm --filter @kingsguard/eslint-plugin-sentinel-react pack --pack-destination $env:RUNNER_TEMP
