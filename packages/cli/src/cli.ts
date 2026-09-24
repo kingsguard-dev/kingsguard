@@ -1,0 +1,35 @@
+import { cliArguments, CliRequest, parseArguments } from './arguments.js';
+
+export type OutputSink = (text: string) => void;
+
+export type CliOptions = {
+  args: string[];
+  stdout: OutputSink;
+  stderr: OutputSink;
+  version: string;
+};
+
+export enum ExitCode {
+  Success = 0,
+}
+
+const usage = `Usage: kingsguard [${cliArguments.help.name} | ${cliArguments.version.name}]`;
+const help = `Kingsguard command line
+
+${usage}
+
+Options:
+  ${cliArguments.help.name}     ${cliArguments.help.description}
+  ${cliArguments.version.name}  ${cliArguments.version.description}
+`;
+
+export function runCli({ args, stdout, version }: CliOptions): ExitCode {
+  switch (parseArguments(args)) {
+    case CliRequest.Help:
+      stdout(help);
+      return ExitCode.Success;
+    case CliRequest.Version:
+      stdout(`${version}\n`);
+      return ExitCode.Success;
+  }
+}
