@@ -3,7 +3,11 @@ export const cliArguments = {
   version: { name: '--version', description: 'Show the CLI version' },
 };
 
-export type CliRequest = 'help' | 'version' | 'usage-error';
+export enum CliRequest {
+  Help = 'help',
+  Version = 'version',
+  UsageError = 'usage-error',
+}
 
 export function parseArguments(args: string[]): CliRequest {
   if (
@@ -11,10 +15,10 @@ export function parseArguments(args: string[]): CliRequest {
     args.includes(cliArguments.help.name) ||
     args.includes(cliArguments.help.alias)
   ) {
-    return 'help';
+    return CliRequest.Help;
   }
   if (args.includes(cliArguments.version.name)) {
-    return 'version';
+    return CliRequest.Version;
   }
-  return 'usage-error';
+  return CliRequest.UsageError;
 }

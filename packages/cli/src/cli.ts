@@ -1,4 +1,4 @@
-import { cliArguments, parseArguments } from './arguments.js';
+import { cliArguments, CliRequest, parseArguments } from './arguments.js';
 
 export type OutputSink = (text: string) => void;
 
@@ -32,13 +32,13 @@ export function runCli({
   version,
 }: CliOptions): ExitCode {
   switch (parseArguments(args)) {
-    case 'help':
+    case CliRequest.Help:
       stdout(help);
       return ExitCode.Success;
-    case 'version':
+    case CliRequest.Version:
       stdout(`${version}\n`);
       return ExitCode.Success;
-    case 'usage-error':
+    case CliRequest.UsageError:
       stderr(usageError);
       return ExitCode.UsageError;
   }
