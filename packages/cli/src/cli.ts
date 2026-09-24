@@ -1,44 +1,45 @@
+import { cliArguments, parseArguments } from './arguments.js';
+
 export type OutputSink = (text: string) => void;
 
+export type CliOptions = {
+  args: string[];
+  stdout: OutputSink;
+  stderr: OutputSink;
+  version: string;
+};
+
+export enum ExitCode {
+  Success = 0,
+  UsageError = 2,
+}
+
+const usage = `Usage: kingsguard [${cliArguments.help.name} | ${cliArguments.version.name}]`;
 const help = `Kingsguard command line
 
-Usage: kingsguard [--help | --version | init]
+${usage}
 
 Options:
-  --help     Show this help
-  --version  Show the CLI version
-
-Commands:
-  init       Unavailable in this candidate; it does not inspect or change a project
+  ${cliArguments.help.name}     ${cliArguments.help.description}
+  ${cliArguments.version.name}  ${cliArguments.version.description}
 `;
+const usageError = `${usage}\nRun "kingsguard ${cliArguments.help.name}" for details.\n`;
 
-const usageError =
-  'Usage: kingsguard [--help | --version | init]\nRun "kingsguard --help" for details.\n';
-
-export function runCli(
-  args: string[],
-  stdout: OutputSink,
-  stderr: OutputSink,
-  version: string,
-): number {
-  if (
-    args.length === 0 ||
-    (args.length === 1 && (args[0] === '--help' || args[0] === 'help'))
-  ) {
-    stdout(help);
-    return 0;
+export function runCli({
+  args,
+  stdout,
+  stderr,
+  version,
+}: CliOptions): ExitCode {
+  switch (parseArguments(args)) {
+    case 'help':
+      stdout(help);
+      return ExitCode.Success;
+    case 'version':
+      stdout(`${version}\n`);
+      return ExitCode.Success;
+    case 'usage-error':
+      stderr(usageError);
+      return ExitCode.UsageError;
   }
-
-  if (args.length === 1 && args[0] === '--version') {
-    stdout(`${version}\n`);
-    return 0;
-  }
-
-  if (args[0] === 'init' && args.length === 1) {
-    stderr('Kingsguard init is not implemented in this candidate.\n');
-    return 1;
-  }
-
-  stderr(usageError);
-  return 2;
 }

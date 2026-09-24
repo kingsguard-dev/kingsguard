@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import {
   mkdirSync,
   mkdtempSync,
@@ -14,6 +14,8 @@ import { describe, expect, it } from 'vitest';
 
 const repositoryRoot = resolve(import.meta.dirname, '../../..');
 const packageDirectory = join(repositoryRoot, 'packages/cli');
+
+type InstalledManifest = { version: string; bin: Record<string, string> };
 
 function run(command: string, args: string[], cwd: string) {
   return execFileSync(command, args, {
@@ -68,21 +70,53 @@ describe('packed CLI', () => {
       );
       const installedManifest = JSON.parse(
         readFileSync(join(installedPackage, 'package.json'), 'utf8'),
-      ) as { version: string; bin: Record<string, string> };
+      ) as InstalledManifest;
 
-      expect(run(executable, ['--help'], callerDirectory)).toContain(
-        'Unavailable',
-      );
-      expect(run(executable, ['--version'], callerDirectory)).toBe(
-        `${installedManifest.version}\n`,
-      );
-      const initResult = capture(executable, ['init'], callerDirectory);
-      expect(initResult).toEqual({
-        status: 1,
-        stdout: '',
-        stderr: 'Kingsguard init is not implemented in this candidate.\n',
-      });
-      expect(capture(executable, ['wat'], callerDirectory).status).toBe(2);
+      const help = capture(executable, ['--help'], callerDirectory);
+      expect(help.status).toBe(0);
+      expect(help.stdout).toContain('Kingsguard command line');
+      expect(help.stdout).not.toContain('init');
+      expect(help.stderr).toBe('');
+      for (const args of [
+        [],
+        ['--other', '--help'],
+        ['--version', '--help'],
+        ['help', '--version'],
+      ]) {
+        expect(capture(executable, args, callerDirectory)).toEqual(help);
+      }
+      for (const args of [['--version'], ['--other', '--abc', '--version']]) {
+        expect(capture(executable, args, callerDirectory)).toEqual({
+          status: 0,
+          stdout: `${installedManifest.version}\n`,
+          stderr: '',
+        });
+      }
+      for (const args of [['wat'], ['init']]) {
+        expect(capture(executable, args, callerDirectory)).toEqual({
+          status: 2,
+          stdout: '',
+          stderr:
+            'Usage: kingsguard [--help | --version]\nRun "kingsguard --help" for details.\n',
+        });
+      }
+      const manifestPath = join(installedPackage, 'package.json');
+      for (const version of [undefined, 42]) {
+        writeFileSync(
+          manifestPath,
+          JSON.stringify({ ...installedManifest, version }),
+        );
+        const invalidVersion = capture(
+          executable,
+          ['--version'],
+          callerDirectory,
+        );
+        expect(invalidVersion.status).toBe(1);
+        expect(invalidVersion.stdout).toBe('');
+        expect(invalidVersion.stderr).toContain(
+          'Invalid CLI package metadata: version must be a string.',
+        );
+      }
       expect(readFileSync(sentinelPath, 'utf8')).toBe('unchanged');
 
       expect(statSync(join(installedPackage, 'LICENSE')).isFile()).toBe(true);
@@ -101,18 +135,11 @@ describe('packed CLI', () => {
 });
 
 function capture(command: string, args: string[], cwd: string) {
-  try {
-    return { status: 0, stdout: run(command, args, cwd), stderr: '' };
-  } catch (error) {
-    const result = error as {
-      status?: number;
-      stdout?: Buffer;
-      stderr?: Buffer;
-    };
-    return {
-      status: result.status ?? -1,
-      stdout: result.stdout?.toString() ?? '',
-      stderr: result.stderr?.toString() ?? '',
-    };
-  }
+  const result = spawnSync(command, args, { cwd, encoding: 'utf8' });
+  if (result.error) throw result.error;
+  return {
+    status: result.status,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  };
 }

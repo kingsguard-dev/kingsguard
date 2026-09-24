@@ -6,55 +6,76 @@ const testVersion = '9.8.7-test';
 function execute(args: string[]) {
   const stdout: string[] = [];
   const stderr: string[] = [];
-  const exitCode = runCli(
+  const exitCode = runCli({
     args,
-    (text) => stdout.push(text),
-    (text) => stderr.push(text),
-    testVersion,
-  );
+    stdout: (text) => stdout.push(text),
+    stderr: (text) => stderr.push(text),
+    version: testVersion,
+  });
   return { exitCode, stdout: stdout.join(''), stderr: stderr.join('') };
 }
 
 describe('Kingsguard CLI entry', () => {
-  it.each([{ args: [] }, { args: ['--help'] }, { args: ['help'] }])(
-    'prints help for $args',
-    ({ args }) => {
-      const result = execute(args);
+  it.each(
+    [
+      [],
+      ['--help'],
+      ['help'],
+      ['--help', '--other'],
+      ['--other', '--help', '--abc'],
+      ['--other', '--abc', '--help'],
+      ['help', '--other'],
+      ['--other', 'help', '--abc'],
+      ['--other', '--abc', 'help'],
+      ['--version', '--help'],
+      ['--help', '--version'],
+      ['--version', 'help'],
+      ['help', '--version'],
+      ['--help', '--help'],
+    ].map((args) => ({ args })),
+  )('prints help for $args', ({ args }) => {
+    const result = execute(args);
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Kingsguard command line');
+    expect(result.stdout).toContain('--help     Show this help');
+    expect(result.stdout).toContain('--version  Show the CLI version');
+    expect(result.stdout).not.toContain('init');
+    expect(result.stdout).not.toContain(testVersion);
+    expect(result.stderr).toBe('');
+  });
 
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Kingsguard command line');
-      expect(result.stdout).toContain('init       Unavailable');
-      expect(result.stderr).toBe('');
-    },
-  );
-
-  it('prints the package version', () => {
-    expect(execute(['--version'])).toEqual({
+  it.each(
+    [
+      ['--version'],
+      ['--version', '--other'],
+      ['--other', '--version', '--abc'],
+      ['--other', '--abc', '--version'],
+      ['--version', '--version'],
+    ].map((args) => ({ args })),
+  )('prints the package version for $args', ({ args }) => {
+    expect(execute(args)).toEqual({
       exitCode: 0,
       stdout: `${testVersion}\n`,
       stderr: '',
     });
   });
 
-  it('reports init as unavailable on stderr', () => {
-    expect(execute(['init'])).toEqual({
-      exitCode: 1,
+  it.each(
+    [
+      ['unknown'],
+      ['--unknown'],
+      ['init'],
+      ['init', 'extra'],
+      ['--other', '--abc'],
+      ['--helpful'],
+      ['--version=1'],
+    ].map((args) => ({ args })),
+  )('returns a usage error for $args', ({ args }) => {
+    expect(execute(args)).toEqual({
+      exitCode: 2,
       stdout: '',
-      stderr: 'Kingsguard init is not implemented in this candidate.\n',
+      stderr:
+        'Usage: kingsguard [--help | --version]\nRun "kingsguard --help" for details.\n',
     });
-  });
-
-  it.each([
-    { args: ['unknown'] },
-    { args: ['--unknown'] },
-    { args: ['--help', 'extra'] },
-    { args: ['init', 'extra'] },
-    { args: ['--version', '--help'] },
-  ])('returns a usage error for $args', ({ args }) => {
-    const result = execute(args);
-
-    expect(result.exitCode).toBe(2);
-    expect(result.stdout).toBe('');
-    expect(result.stderr).toContain('Usage: kingsguard');
   });
 });

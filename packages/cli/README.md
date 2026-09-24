@@ -1,8 +1,12 @@
 # @kingsguard/cli
 
 This package is an unpublished, minimal command-line entry for Kingsguard. It
-supports `--help` and `--version`. The `init` command is not implemented in this
-candidate and exits with an error; it does not inspect or change a project.
+supports `--help` and `--version`.
+
+With no arguments, the CLI shows help. `help` or `--help` anywhere in the arguments
+shows help, taking precedence over `--version`. Otherwise, `--version` anywhere
+shows the version. Both requests ignore other arguments and exit with code 0.
+Unrecognized arguments alone produce a usage error on stderr and exit with code 2.
 
 ```sh
 kingsguard --help
