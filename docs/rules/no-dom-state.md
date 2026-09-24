@@ -45,6 +45,20 @@ file. Named import aliases and default/namespace React imports are recognized.
 Lexical scope resolution distinguishes shadowed variables and imports. Reassigned
 ref variables are skipped.
 
+A direct immutable node alias is also recognized within the function that declares
+it, including blocks and null guards:
+
+```tsx
+const node = ref.current;
+if (node) node.hidden = true; // reports hidden
+```
+
+The alias must be a `const` initialized directly from `ref.current`, with the ref
+bound to a native JSX element as above. TypeScript assertions, non-null expressions,
+optional access, and static string keys follow the same transparent syntax rules
+as direct ref access. Reassigned alias bindings are skipped. This recognizes the
+binding rather than a variable name; a shadowed `node` is separate.
+
 The declaration must bind the ref object directly, such as
 `const banana = useRef(null)`. A destructured value such as
 `const { current: banana } = useRef(callback)` is not recognized as a ref object:
@@ -103,9 +117,12 @@ exempt a direct DOM-member operation from the allow list.
 
 ## Detection limits and overrides
 
-- No cross-file tracking, ref aliases, node aliases (`const node = ref.current`),
-  callback refs, forwarded refs, custom hooks, or DOM parameters. Refs attached
-  only to custom components do not establish DOM ownership.
+- No cross-file tracking, ref-object aliases (`const alias = ref`), node alias
+  chains, mutable or destructured node aliases, callback refs, forwarded refs,
+  custom hooks, or DOM parameters. Node aliases declared at module scope or used
+  inside nested functions are not followed. Direct `ref.current` access in nested
+  functions remains covered. Refs attached only to custom components do not
+  establish DOM ownership.
 - Interprocedural SDK behavior and reflection through `Object`/`Reflect` APIs on
   bare nodes are not tracked.
 - Dynamic access before node recognition (`ref[key]`), array destructuring or
@@ -113,6 +130,8 @@ exempt a direct DOM-member operation from the allow list.
   are not tracked. These gaps are detection limits, not approved usage patterns.
 - A ref with no matching JSX binding is skipped, even with a DOM type annotation.
   A native JSX binding supplies evidence, not proof of its runtime value.
+- Recognition is syntax- and scope-based. Assignments to `ref.current` do not
+  establish or disprove the runtime type of a later direct node alias.
 - An explicit ESLint suppression with a reason is the site-level override:
 
 ```js

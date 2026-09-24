@@ -205,10 +205,6 @@ tester.run('built-in DOM-ref operation allowlist', noDomState, {
     example('const {clientWidth = ref.current.clientHeight} = ref.current;'),
     // Named detection limits, not approved escape hatches.
     {
-      name: 'node alias is not tracked',
-      code: example('const node=ref.current; node.style.color=value;'),
-    },
-    {
       name: 'ref alias is not tracked',
       code: example('const alias=ref; alias.current.hidden=true;'),
     },
@@ -301,5 +297,82 @@ tester.run('built-in DOM-ref operation allowlist', noDomState, {
     denied('const {[ref.current.hidden]:value}=ref.current;', 2),
     denied('({hidden:ref.current.value}=ref.current);', 2),
     denied('const {clientWidth=ref.current.hidden}=ref.current;'),
+  ],
+});
+
+const alias = (body: string) => example(`const node = ref.current; ${body}`);
+tester.run('direct const DOM-node aliases', noDomState, {
+  valid: [
+    alias('node.focus(); node?.scrollIntoView();'),
+    alias('const width = node.clientWidth; node.scrollTop += 1;'),
+    alias('const { clientHeight } = node; node.scrollLeft = 0;'),
+    alias('const box = node.getBoundingClientRect().width;'),
+    example(
+      'const node = (ref.current as HTMLButtonElement)!; node?.focus?.();',
+    ),
+    example('const node = ref.current; if (node) node.scrollTo(0, 1);'),
+    // These bindings do not establish a direct, immutable DOM-node alias.
+    example(
+      'const alias = ref; const node = alias.current; node.hidden = true;',
+    ),
+    example(
+      'const first = ref.current; const node = first; node.hidden = true;',
+    ),
+    example('let node = ref.current; node.hidden = true;'),
+    example('var node = ref.current; node.hidden = true;'),
+    example('const { current: node } = ref; node.hidden = true;'),
+    example('const node = ref.current; node = other; node.hidden = true;'),
+    example(
+      'const node = ref.current; function nested() { node.hidden = true; }',
+    ),
+    example('const node = ref.current; (() => node.hidden = true)();'),
+    example(
+      'const node = ref.current; function nested(node) { node.hidden = true; }',
+    ),
+    example(
+      'function nested(ref) { const node = ref.current; node.hidden = true; }',
+    ),
+    example(
+      'const node = ref.current; node.hidden = true;',
+      '',
+      '({ current: {} })',
+    ),
+    example(
+      'const node = ref.current; node.hidden = true;',
+      "import { useRef } from 'other';",
+    ),
+    "import { createRef } from 'react'; const ref = createRef(); const node = ref.current; node.hidden = true; const view = <button ref={ref}/>;",
+    example(
+      'const node = ref.current; node.hidden = true;',
+      "import { useRef } from 'react';",
+      'useRef(null)',
+      'Widget',
+    ),
+  ],
+  invalid: [
+    ...[
+      'node.hidden;',
+      'node.value = value;',
+      'node.style.color = value;',
+      'node.setAttribute("hidden", "");',
+      'node[key] = value;',
+      'const method = node.focus;',
+      'const { focus } = node;',
+      'const { style } = node;',
+      '({ hidden: value } = node);',
+      'delete node.scrollTop;',
+      '(node as HTMLButtonElement).hidden = true;',
+      'node?.hidden;',
+      'node?.setAttribute?.("hidden", "");',
+    ].map((body) => denied(`const node = ref.current; ${body}`)),
+    denied('const node = ref.current; if (node) node.hidden = true;'),
+    denied('const node = ref["current"]; node.hidden = true;'),
+    denied(
+      'ref.current = other; const node = ref.current; node.hidden = true;',
+    ),
+    denied(
+      'const node = ref.current; ref.current.hidden = true; function nested() { ref.current.hidden = true; }',
+      2,
+    ),
   ],
 });

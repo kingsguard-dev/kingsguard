@@ -39,7 +39,9 @@ It does not prove every runtime value is a DOM element. Conservative coverage an
 explicit documentation are preferable to claiming universal DOM operation detection.
 Within recognized refs, the rule applies one built-in operation allow list: direct
 calls, reads, and writes have distinct permissions. Unknown members are denied.
-Node aliases, reflection on bare nodes, and interprocedural behavior remain
+Direct `const node = ref.current` aliases are recognized within their declaring
+function, including nested blocks. Ref-object aliases, alias chains, uses in
+nested functions, reflection on bare nodes, and interprocedural behavior remain
 detection gaps; effects and third-party calls are not automatic exemptions.
 
 The `@kingsguard/cli` package provides help and version output.

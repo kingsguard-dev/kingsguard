@@ -4,6 +4,7 @@ import {
   type TSESTree,
 } from '@typescript-eslint/utils';
 import {
+  isReactDomNodeAlias,
   isReactRef,
   propertyName,
   resolve,
@@ -71,6 +72,8 @@ export const noDomState = createRule({
     }[] = [];
     function isDomNode(expression: TSESTree.Node): boolean {
       const current = unwrap(expression);
+      if (current.type === T.Identifier)
+        return isReactDomNodeAlias(source, current, domRefs);
       if (
         current.type !== T.MemberExpression ||
         propertyName(current) !== 'current'
