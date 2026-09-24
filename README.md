@@ -17,8 +17,10 @@ pnpm test:watch
 ```
 
 `check` runs formatting, lint, type checking, tests, and package builds. CI runs
-the same checks on Node 22 and 24. TypeScript stays on 5.9 while the
-typescript-eslint dependency supports TypeScript versions below 6.1.
+these checks on Ubuntu and macOS with Node 22 and 24. Both platforms pack the
+React plugin; the packed-consumer compatibility matrix runs on Ubuntu, and
+coverage is collected once on Ubuntu with Node 24. TypeScript stays on 5.9 while
+the typescript-eslint dependency supports TypeScript versions below 6.1.
 
 ### Test coverage
 
