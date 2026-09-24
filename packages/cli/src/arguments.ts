@@ -6,7 +6,6 @@ export const cliArguments = {
 export enum CliRequest {
   Help = 'help',
   Version = 'version',
-  UsageError = 'usage-error',
 }
 
 export function parseArguments(args: string[]): CliRequest {
@@ -16,5 +15,5 @@ export function parseArguments(args: string[]): CliRequest {
   if (args.includes(cliArguments.version.name)) {
     return CliRequest.Version;
   }
-  return CliRequest.UsageError;
+  return CliRequest.Help;
 }

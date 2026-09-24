@@ -11,7 +11,6 @@ export type CliOptions = {
 
 export enum ExitCode {
   Success = 0,
-  UsageError = 2,
 }
 
 const usage = `Usage: kingsguard [${cliArguments.help.name} | ${cliArguments.version.name}]`;
@@ -23,14 +22,8 @@ Options:
   ${cliArguments.help.name}     ${cliArguments.help.description}
   ${cliArguments.version.name}  ${cliArguments.version.description}
 `;
-const usageError = `${usage}\nRun "kingsguard ${cliArguments.help.name}" for details.\n`;
 
-export function runCli({
-  args,
-  stdout,
-  stderr,
-  version,
-}: CliOptions): ExitCode {
+export function runCli({ args, stdout, version }: CliOptions): ExitCode {
   switch (parseArguments(args)) {
     case CliRequest.Help:
       stdout(help);
@@ -38,8 +31,5 @@ export function runCli({
     case CliRequest.Version:
       stdout(`${version}\n`);
       return ExitCode.Success;
-    case CliRequest.UsageError:
-      stderr(usageError);
-      return ExitCode.UsageError;
   }
 }

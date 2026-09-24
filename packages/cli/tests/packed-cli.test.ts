@@ -92,13 +92,8 @@ describe('packed CLI', () => {
           stderr: '',
         });
       }
-      for (const args of [['wat'], ['init'], ['help']]) {
-        expect(capture(executable, args, callerDirectory)).toEqual({
-          status: 2,
-          stdout: '',
-          stderr:
-            'Usage: kingsguard [--help | --version]\nRun "kingsguard --help" for details.\n',
-        });
+      for (const args of [['wat'], ['init'], ['help'], ['--other', '--abc']]) {
+        expect(capture(executable, args, callerDirectory)).toEqual(help);
       }
       const manifestPath = join(installedPackage, 'package.json');
       for (const version of [undefined, 42]) {

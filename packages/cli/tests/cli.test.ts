@@ -68,12 +68,7 @@ describe('Kingsguard CLI entry', () => {
       ['--helpful'],
       ['--version=1'],
     ].map((args) => ({ args })),
-  )('returns a usage error for $args', ({ args }) => {
-    expect(execute(args)).toEqual({
-      exitCode: 2,
-      stdout: '',
-      stderr:
-        'Usage: kingsguard [--help | --version]\nRun "kingsguard --help" for details.\n',
-    });
+  )('falls back to full help for $args', ({ args }) => {
+    expect(execute(args)).toEqual(execute(['--help']));
   });
 });

@@ -6,7 +6,7 @@ supports `--help` and `--version`.
 With no arguments, the CLI shows help. `--help` anywhere in the arguments
 shows help, taking precedence over `--version`. Otherwise, `--version` anywhere
 shows the version. Both requests ignore other arguments and exit with code 0.
-Unrecognized arguments alone produce a usage error on stderr and exit with code 2.
+Unrecognized arguments alone show the same help on stdout and exit with code 0.
 
 ```sh
 kingsguard --help
