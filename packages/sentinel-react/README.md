@@ -75,6 +75,7 @@ built-in operations: direct focus, scrolling, selection, measurement and playbac
 calls; scalar geometry/scroll reads; and scroll-position writes. Other direct
 member reads, calls, and writes report. Prefer JSX props derived from React
 state. Ordinary data refs remain outside this DOM-ref rule.
+Direct `const node = ref.current` aliases are checked in their declaring function.
 
 See the [full rule documentation](https://github.com/kingsguard-dev/kingsguard/blob/main/docs/rules/no-dom-state.md)
 for exact coverage, exceptions, and limitations. No automatic fix is offered.
