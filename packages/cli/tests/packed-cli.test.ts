@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from 'node:child_process';
+import spawn from 'cross-spawn';
 import {
   mkdirSync,
   mkdtempSync,
@@ -18,16 +18,18 @@ const packageDirectory = join(repositoryRoot, 'packages/cli');
 type InstalledManifest = { version: string; bin: Record<string, string> };
 
 function run(command: string, args: string[], cwd: string) {
-  return execFileSync(command, args, {
-    cwd,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  const result = capture(command, args, cwd);
+  if (result.status !== 0) {
+    throw new Error(
+      `${command} failed (status ${result.status}):\n${result.stdout}\n${result.stderr}`,
+    );
+  }
+  return result.stdout;
 }
 
 describe('packed CLI', () => {
   it('installs and runs the packaged binary without touching the caller directory', () => {
-    const temporaryDirectory = mkdtempSync(join(tmpdir(), 'kingsguard-cli-'));
+    const temporaryDirectory = mkdtempSync(join(tmpdir(), 'kingsguard cli-'));
     const packageOutput = join(temporaryDirectory, 'package');
     const installPrefix = join(temporaryDirectory, 'install');
     const callerDirectory = join(temporaryDirectory, 'caller');
@@ -36,10 +38,7 @@ describe('packed CLI', () => {
     try {
       mkdirSync(packageOutput);
       mkdirSync(callerDirectory);
-      execFileSync('pnpm', ['--filter', '@kingsguard/cli', 'build'], {
-        cwd: repositoryRoot,
-        stdio: 'pipe',
-      });
+      run('pnpm', ['--filter', '@kingsguard/cli', 'build'], repositoryRoot);
       run(
         'npm',
         ['pack', '--ignore-scripts', '--pack-destination', packageOutput],
@@ -63,7 +62,11 @@ describe('packed CLI', () => {
       );
 
       writeFileSync(sentinelPath, 'unchanged');
-      const executable = join(installPrefix, 'node_modules/.bin/kingsguard');
+      const executable = join(
+        installPrefix,
+        'node_modules/.bin',
+        process.platform === 'win32' ? 'kingsguard.cmd' : 'kingsguard',
+      );
       const installedPackage = join(
         installPrefix,
         'node_modules/@kingsguard/cli',
@@ -130,7 +133,11 @@ describe('packed CLI', () => {
 });
 
 function capture(command: string, args: string[], cwd: string) {
-  const result = spawnSync(command, args, { cwd, encoding: 'utf8' });
+  const result = spawn.sync(command, args, {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
   if (result.error) throw result.error;
   return {
     status: result.status,
