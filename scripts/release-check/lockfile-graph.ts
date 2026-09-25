@@ -116,7 +116,9 @@ function index(graph: LockfileGraph): IndexedGraph {
       visited.add(id);
       const node = nodes.get(id);
       if (!node) throw new Error('Missing validated dependency node');
-      owners.set(id, [...(owners.get(id) ?? []), root]);
+      const nodeOwners = owners.get(id);
+      if (nodeOwners) nodeOwners.push(root);
+      else owners.set(id, [root]);
       pending.push(...node.dependencies);
     }
   }

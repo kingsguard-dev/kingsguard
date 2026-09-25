@@ -289,3 +289,26 @@ it('rejects sparse attribution on either side before comparing snapshots', () =>
     );
   }
 });
+
+it('retains all owners of a dependency shared by many roots', () => {
+  const roots = Array.from({ length: 2000 }, (_, i) =>
+    root({
+      id: `workspace-${i}`,
+      target: 'shared',
+      impact: 'require',
+      packages: [`package-${i}`],
+    }),
+  );
+  const base = graph({ roots, nodes: [node('shared')] });
+  const head = graph({ roots, nodes: [node('shared', [], 'changed')] });
+  const before = structuredClone({ base, head });
+  const result = classifyLockfileGraph({ base, head });
+  expect(result.status).toBe('require');
+  expect(result.packages).toEqual(
+    roots.flatMap((item) => item.packages ?? []).sort(),
+  );
+  expect(result.evidence[0]?.roots).toEqual(
+    roots.map((item) => item.id).sort(),
+  );
+  expect({ base, head }).toEqual(before);
+});
