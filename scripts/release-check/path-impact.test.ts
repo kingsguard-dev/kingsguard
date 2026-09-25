@@ -8,7 +8,9 @@ import {
 
 const file = (path: string) => ({ kind: 'file' as const, path });
 const directory = (path: string) => ({ kind: 'directory' as const, path });
-function pkg(path: string, name: string): PackagePaths {
+type PackageIdentity = Pick<PackagePaths, 'path' | 'name'>;
+
+function pkg({ path, name }: PackageIdentity): PackagePaths {
   return {
     path,
     name,
@@ -21,11 +23,11 @@ function pkg(path: string, name: string): PackagePaths {
     build: [file(`${path}/tsconfig.build.json`)],
   };
 }
-const cli = pkg('packages/cli', '@kingsguard/cli');
-const react = pkg(
-  'packages/sentinel-react',
-  '@kingsguard/eslint-plugin-sentinel-react',
-);
+const cli = pkg({ path: 'packages/cli', name: '@kingsguard/cli' });
+const react = pkg({
+  path: 'packages/sentinel-react',
+  name: '@kingsguard/eslint-plugin-sentinel-react',
+});
 function inventory(packages = [cli, react]): PathInventory {
   return { complete: true, packages, sharedBuild: [] };
 }
@@ -184,7 +186,7 @@ it('renames into or out of source preserve requiring evidence and both identitie
 });
 
 it('preserves deleted, new, moved, and renamed public package identities', () => {
-  const moved = pkg('tools/cli', '@kingsguard/new-cli');
+  const moved = pkg({ path: 'tools/cli', name: '@kingsguard/new-cli' });
   const result = classify(
     [
       { oldPath: 'packages/cli/LICENSE', newPath: null },
