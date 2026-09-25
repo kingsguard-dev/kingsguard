@@ -50,3 +50,14 @@ The computed-style guard is a separate global-browser rule: it resolves lexical
 bindings for browser APIs without requiring React ref or JSX ownership. Its
 read/reference diagnostics live in the rule; it shares the existing static member
 and expression-wrapper helpers. It does not infer intent from effects or SDK calls.
+
+The CLI's internal `project-root.ts` helper resolves an explicitly selected directory
+without searching upward for a project. It preserves the selected manifest text,
+canonicalizes ancestor aliases, and checks every parent through the filesystem root.
+Selected directory symlinks and symlink/nonregular metadata are rejected before
+reading; malformed or inaccessible metadata produces an unsupported result.
+Any selected or ancestor `workspaces` property or `pnpm-workspace.yaml` is an
+unsupported workspace boundary, regardless of membership. These read-only checks
+assume metadata is not concurrently replaced; they do not execute application code,
+inspect lockfiles or configuration, or determine installation eligibility. The helper
+is not connected to CLI argument handling.
