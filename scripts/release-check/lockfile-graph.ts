@@ -50,7 +50,7 @@ const unique = (values: string[]) => [...new Set(values)].sort();
 const nonempty = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 const strings = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every(nonempty);
+  Array.isArray(value) && Array.from(value).every(nonempty);
 function statusOf(statuses: ImpactStatus[]): ImpactStatus {
   return statuses.includes('unresolved')
     ? 'unresolved'

@@ -272,3 +272,20 @@ it.each([
     classifyLockfileGraph({ base: invalid, head: invalid }),
   ).toThrow();
 });
+
+it('rejects sparse attribution on either side before comparing snapshots', () => {
+  const valid = graph({ roots: [runtime], nodes: [node('runtime')] });
+  const invalid = graph({
+    roots: [{ ...runtime, packages: new Array<string>(1) }],
+    nodes: [node('runtime')],
+  });
+  for (const [base, head] of [
+    [invalid, valid],
+    [valid, invalid],
+    [invalid, invalid],
+  ] as const) {
+    expect(() => classifyLockfileGraph({ base, head })).toThrow(
+      'Invalid or duplicate dependency root',
+    );
+  }
+});
