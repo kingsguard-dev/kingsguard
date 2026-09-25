@@ -11,5 +11,5 @@
     "declaration": true,
     "sourceMap": true
   },
-  "include": ["packages/**/*.ts", "scripts/release-check/**/*.ts"]
+  "include": ["packages/**/*.ts"]
 }
