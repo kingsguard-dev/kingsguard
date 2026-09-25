@@ -80,3 +80,44 @@ when attributable, otherwise remain unresolved; an empty evidence field path
 identifies this whole-manifest case. Key ordering does not count as a change;
 array ordering does. No semantic changes produce an exempt result with no evidence.
 This is a component result, not a complete release decision or installed CI check.
+
+## Normalized lockfile graph impact
+
+`classifyLockfileGraph({ base, head })` classifies complete normalized dependency
+graphs. It does not parse pnpm/YAML, discover dependencies, install packages, or
+provide an integrated lockfile check. Each snapshot supplies:
+
+- `complete: true`, plus a `metadataFingerprint` for global lockfile settings.
+- Nodes with stable opaque `id`, `fingerprint`, and dependency-node IDs.
+- Roots with stable `id`, `fingerprint`, `target`, trusted `impact`, and affected
+  public `packages` (`null` means unknown).
+
+The caller must preserve every dependency edge, including optional and peer
+relationships, and all nonstructural data in canonical fingerprints, including
+resolution/integrity metadata. Root identities distinguish importer, dependency
+category and name; node identities distinguish peer-qualified instances. Global
+metadata not represented by nodes/roots belongs in the metadata fingerprint.
+Missing/unsupported normalization must never be presented as a complete graph.
+
+Root impact is supplied by trusted base policy, never taken from a lockfile:
+`exempt` proves exclusively internal test/lint/format usage and has no package
+names; `require` represents runtime/build impact; `unresolved` means unknown usage.
+The function validates shape, uniqueness and references, but cannot prove caller
+completeness, policy provenance or fingerprints. Requiring roots without package
+attribution remain unresolved; unknown roots retain any known package names.
+
+| Change                                                                     | Result                                       |
+| -------------------------------------------------------------------------- | -------------------------------------------- |
+| Node reachable only from proven internal roots                             | Exempt                                       |
+| Node shared with runtime/build roots                                       | Require every affected package               |
+| Unknown root, missing attribution, or changed node orphaned on either side | Unresolved, retaining known package coverage |
+| Root added, removed, rewired or reclassified                               | Combine old/new root impact                  |
+| Global metadata fingerprint changes                                        | Unresolved                                   |
+| Ordering changes or duplicate edges only                                   | No semantic change                           |
+
+Traversal considers every reaching root on both sides and terminates on cycles.
+Removed nodes and roots retain base coverage. Each changed node/root has evidence;
+metadata has its own entry. Unknown takes precedence over require, then exempt.
+Results and identifiers are deterministic; input arrays remain untouched. Dangling
+references, duplicate node/root IDs and incomplete snapshots throw. Complete empty
+graphs represent absent lockfiles; equal snapshots return exempt with no evidence.
