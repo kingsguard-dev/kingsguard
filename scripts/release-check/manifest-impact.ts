@@ -265,7 +265,7 @@ export function classifyManifest(input: ManifestInput): ManifestImpact {
         add(
           [field, key],
           required ? 'require' : internal ? 'exempt' : 'unresolved',
-          relevant,
+          sides,
         );
       }
     }

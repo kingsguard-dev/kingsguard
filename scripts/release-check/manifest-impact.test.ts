@@ -274,3 +274,38 @@ describe('invalid input', () => {
     ).toThrow();
   });
 });
+
+it.each(['scripts', 'devDependencies'])(
+  'preserves both attribution sides when adding or deleting %s entries',
+  (field) => {
+    const key = field === 'scripts' ? 'build' : 'typescript';
+    const value = field === 'scripts' ? 'tsc' : '~5.9';
+    const empty = side({ fields: { private: true }, packages: [cli] });
+    const populated = side({
+      fields: { private: true, [field]: { [key]: value } },
+      packages: [react],
+    });
+    for (const [base, head] of [
+      [empty, populated],
+      [populated, empty],
+    ] as const) {
+      expect(classifyManifest({ base, head })).toMatchObject({
+        status: 'require',
+        packages: [cli, react],
+      });
+    }
+    for (const packages of [null, []]) {
+      const unattributed = { ...empty, packages };
+      for (const [base, head] of [
+        [unattributed, populated],
+        [populated, unattributed],
+      ] as const) {
+        expect(classifyManifest({ base, head })).toMatchObject({
+          status: 'unresolved',
+          packages: [react],
+          evidence: [{ reason: 'attribution-missing' }],
+        });
+      }
+    }
+  },
+);
