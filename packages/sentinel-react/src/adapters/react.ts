@@ -107,3 +107,50 @@ export function isReactRef(
     );
   });
 }
+
+function containingFunction(node: TSESTree.Node): TSESTree.Node | null {
+  let parent: TSESTree.Node | undefined = node.parent;
+  while (parent) {
+    if (
+      parent.type === T.FunctionDeclaration ||
+      parent.type === T.FunctionExpression ||
+      parent.type === T.ArrowFunctionExpression
+    )
+      return parent;
+    parent = parent.parent;
+  }
+  return null;
+}
+
+/** Recognize only an immutable, same-function node alias of a proven JSX DOM ref. */
+export function isReactDomNodeAlias(
+  source: TSESLint.SourceCode,
+  id: TSESTree.Identifier,
+  domRefs: ReadonlySet<TSESLint.Scope.Variable>,
+): boolean {
+  const variable = resolve(source, id);
+  if (
+    !variable ||
+    variable.references.some((ref) => ref.isWrite() && !ref.init)
+  )
+    return false;
+  return variable.defs.some((def) => {
+    const declarationFunction = containingFunction(def.node);
+    if (
+      def.type !== 'Variable' ||
+      def.parent.kind !== 'const' ||
+      def.node.id.type !== T.Identifier ||
+      !def.node.init ||
+      !declarationFunction ||
+      declarationFunction !== containingFunction(id)
+    )
+      return false;
+    const init = unwrap(def.node.init);
+    if (init.type !== T.MemberExpression || propertyName(init) !== 'current')
+      return false;
+    const ref = unwrap(init.object);
+    if (ref.type !== T.Identifier) return false;
+    const binding = resolve(source, ref);
+    return !!binding && domRefs.has(binding);
+  });
+}
