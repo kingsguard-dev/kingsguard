@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { detectPackageManager } from '../src/package-manager.js';
+import {
+  detectPackageManager,
+  ManagerName,
+  PackageManagerStatus as Status,
+} from '../src/package-manager.js';
 import type { PackageManager } from '../src/package-manager.js';
 import { resolveProjectRoot } from '../src/project-root.js';
 import type { ReadyProject } from '../src/project-root.js';
@@ -27,24 +31,34 @@ function locks(...names: string[]) {
 }
 
 it.each([
-  ['npm@10.9.0', [], 'selected', 'npm'],
-  ['pnpm@10.12.1+sha512.abc', [], 'selected', 'pnpm'],
-  [undefined, ['package-lock.json'], 'selected', 'npm'],
-  [undefined, ['npm-shrinkwrap.json'], 'selected', 'npm'],
-  [undefined, ['pnpm-lock.yaml'], 'selected', 'pnpm'],
-  ['npm@10', ['package-lock.json', 'npm-shrinkwrap.json'], 'selected', 'npm'],
-  ['pnpm@10', ['pnpm-lock.yaml'], 'selected', 'pnpm'],
-  ['npm@10', ['pnpm-lock.yaml'], 'conflict', undefined],
-  [undefined, ['package-lock.json', 'pnpm-lock.yaml'], 'conflict', undefined],
-  [undefined, ['package-lock.json', 'yarn.lock'], 'conflict', undefined],
-  ['yarn@4', [], 'unsupported', undefined],
-  [undefined, ['yarn.lock'], 'unsupported', undefined],
-  ['bun@1', ['bun.lock', 'bun.lockb'], 'unsupported', undefined],
-  [undefined, ['bun.lock'], 'unsupported', undefined],
-  [undefined, ['bun.lockb'], 'unsupported', undefined],
-  ['custom@1', [], 'unsupported', undefined],
-  ['custom@1', ['package-lock.json'], 'conflict', undefined],
-  [undefined, [], 'needs-selection', undefined],
+  ['npm@10.9.0', [], Status.Selected, ManagerName.Npm],
+  ['pnpm@10.12.1+sha512.abc', [], Status.Selected, ManagerName.Pnpm],
+  [undefined, ['package-lock.json'], Status.Selected, ManagerName.Npm],
+  [undefined, ['npm-shrinkwrap.json'], Status.Selected, ManagerName.Npm],
+  [undefined, ['pnpm-lock.yaml'], Status.Selected, ManagerName.Pnpm],
+  [
+    'npm@10',
+    ['package-lock.json', 'npm-shrinkwrap.json'],
+    Status.Selected,
+    ManagerName.Npm,
+  ],
+  ['pnpm@10', ['pnpm-lock.yaml'], Status.Selected, ManagerName.Pnpm],
+  ['npm@10', ['pnpm-lock.yaml'], Status.Conflict, undefined],
+  [
+    undefined,
+    ['package-lock.json', 'pnpm-lock.yaml'],
+    Status.Conflict,
+    undefined,
+  ],
+  [undefined, ['package-lock.json', 'yarn.lock'], Status.Conflict, undefined],
+  ['yarn@4', [], Status.Unsupported, undefined],
+  [undefined, ['yarn.lock'], Status.Unsupported, undefined],
+  ['bun@1', ['bun.lock', 'bun.lockb'], Status.Unsupported, undefined],
+  [undefined, ['bun.lock'], Status.Unsupported, undefined],
+  [undefined, ['bun.lockb'], Status.Unsupported, undefined],
+  ['custom@1', [], Status.Unsupported, undefined],
+  ['custom@1', ['package-lock.json'], Status.Conflict, undefined],
+  [undefined, [], Status.NeedsSelection, undefined],
 ] as const)('classifies %s with %j', (declaration, files, status, manager) => {
   if (declaration !== undefined) project.manifest.packageManager = declaration;
   locks(...files);
@@ -54,14 +68,19 @@ it.each([
 });
 
 it.each([
-  [undefined, [], 'npm', 'selected'],
-  [undefined, [], 'pnpm', 'selected'],
-  ['npm@10', ['package-lock.json'], 'npm', 'selected'],
-  ['npm@10', [], 'pnpm', 'conflict'],
-  [undefined, ['pnpm-lock.yaml'], 'npm', 'conflict'],
-  ['yarn@4', [], 'npm', 'unsupported'],
-  [undefined, ['bun.lock'], 'pnpm', 'unsupported'],
-  [undefined, ['package-lock.json', 'pnpm-lock.yaml'], 'npm', 'conflict'],
+  [undefined, [], ManagerName.Npm, Status.Selected],
+  [undefined, [], ManagerName.Pnpm, Status.Selected],
+  ['npm@10', ['package-lock.json'], ManagerName.Npm, Status.Selected],
+  ['npm@10', [], ManagerName.Pnpm, Status.Conflict],
+  [undefined, ['pnpm-lock.yaml'], ManagerName.Npm, Status.Conflict],
+  ['yarn@4', [], ManagerName.Npm, Status.Unsupported],
+  [undefined, ['bun.lock'], ManagerName.Pnpm, Status.Unsupported],
+  [
+    undefined,
+    ['package-lock.json', 'pnpm-lock.yaml'],
+    ManagerName.Npm,
+    Status.Conflict,
+  ],
 ] as const)(
   'bounds explicit choice for %s / %j / %s',
   (declaration, files, choice, status) => {
@@ -70,7 +89,7 @@ it.each([
     locks(...files);
     const result = detectPackageManager({ project, choice });
     expect(result.status).toBe(status);
-    if (result.status === 'selected') expect(result.manager).toBe(choice);
+    if (result.status === Status.Selected) expect(result.manager).toBe(choice);
     expect(result.evidence).toHaveLength(
       files.length + Number(declaration !== undefined),
     );
@@ -82,7 +101,7 @@ it.each([
   10,
   {},
   '',
-  'npm',
+  ManagerName.Npm,
   'npm@',
   ' npm@10',
   'npm@10 ',
@@ -92,8 +111,8 @@ it.each([
 ])('rejects malformed declaration %j even with a lock and choice', (value) => {
   project.manifest.packageManager = value;
   locks('package-lock.json');
-  expect(detectPackageManager({ project, choice: 'npm' })).toEqual({
-    status: 'invalid-metadata',
+  expect(detectPackageManager({ project, choice: ManagerName.Npm })).toEqual({
+    status: Status.InvalidMetadata,
     path: project.manifestPath,
     evidence: [],
   });
@@ -102,9 +121,12 @@ it.each([
 it('rejects an invalid runtime choice', () => {
   // Deliberately simulate a caller bypassing the TypeScript boundary.
   expect(
-    detectPackageManager({ project, choice: 'yarn' as PackageManager }),
+    detectPackageManager({
+      project,
+      choice: ManagerName.Yarn as PackageManager,
+    }),
   ).toEqual({
-    status: 'invalid-choice',
+    status: Status.InvalidChoice,
     evidence: [],
   });
 });
@@ -115,12 +137,12 @@ it('uses own declaration evidence and ignores the launcher environment', () => {
   vi.stubEnv('npm_config_user_agent', 'npm/10 node/v22');
   vi.stubEnv('npm_execpath', '/npx/npm-cli.js');
   expect(detectPackageManager({ project })).toEqual({
-    status: 'selected',
-    manager: 'pnpm',
+    status: Status.Selected,
+    manager: ManagerName.Pnpm,
     evidence: [
       {
         source: 'lockfile',
-        manager: 'pnpm',
+        manager: ManagerName.Pnpm,
         path: join(project.root, 'pnpm-lock.yaml'),
       },
     ],
@@ -135,14 +157,18 @@ it('returns ordered evidence without reading or changing project files', () => {
     .map((name) => [name, fs.readFileSync(join(project.root, name), 'utf8')]);
   const read = vi.spyOn(fs, 'readFileSync');
   const stat = vi.spyOn(fs, 'lstatSync');
-  expect(detectPackageManager({ project, choice: 'npm' })).toEqual({
-    status: 'selected',
-    manager: 'npm',
+  expect(detectPackageManager({ project, choice: ManagerName.Npm })).toEqual({
+    status: Status.Selected,
+    manager: ManagerName.Npm,
     evidence: [
-      { source: 'packageManager', manager: 'npm', path: project.manifestPath },
+      {
+        source: 'packageManager',
+        manager: ManagerName.Npm,
+        path: project.manifestPath,
+      },
       ...['package-lock.json', 'npm-shrinkwrap.json'].map((name) => ({
         source: 'lockfile',
-        manager: 'npm',
+        manager: ManagerName.Npm,
         path: join(project.root, name),
       })),
     ],
@@ -173,8 +199,10 @@ it.each(['directory', 'symlink'])(
     const path = join(project.root, 'bun.lockb');
     if (kind === 'directory') fs.mkdirSync(path);
     else fs.symlinkSync(project.root, path, 'junction');
-    expect(detectPackageManager({ project, choice: 'npm' })).toMatchObject({
-      status: 'unsafe-path',
+    expect(
+      detectPackageManager({ project, choice: ManagerName.Npm }),
+    ).toMatchObject({
+      status: Status.UnsafePath,
       path,
     });
   },
@@ -190,9 +218,46 @@ it.each(['EACCES', 'EIO', undefined])(
       if (args[0] === path) throw Object.assign(new Error('failed'), { code });
       return actual(...args);
     });
-    expect(detectPackageManager({ project, choice: 'npm' })).toMatchObject({
-      status: 'io-error',
+    expect(
+      detectPackageManager({ project, choice: ManagerName.Npm }),
+    ).toMatchObject({
+      status: Status.IoError,
       path,
     });
   },
 );
+
+it.each([null, undefined, 'failed', 42, {}])(
+  'reports an unexpected thrown value %j as an I/O failure',
+  (error) => {
+    const path = join(project.root, 'package-lock.json');
+    vi.spyOn(fs, 'lstatSync').mockImplementation(() => {
+      throw error;
+    });
+    expect(detectPackageManager({ project })).toEqual({
+      status: Status.IoError,
+      path,
+      evidence: [],
+    });
+  },
+);
+
+it('preserves each conflicting source and path', () => {
+  project.manifest.packageManager = 'npm@10';
+  locks('pnpm-lock.yaml');
+  expect(detectPackageManager({ project })).toEqual({
+    status: Status.Conflict,
+    evidence: [
+      {
+        source: 'packageManager',
+        manager: ManagerName.Npm,
+        path: project.manifestPath,
+      },
+      {
+        source: 'lockfile',
+        manager: ManagerName.Pnpm,
+        path: join(project.root, 'pnpm-lock.yaml'),
+      },
+    ],
+  });
+});
