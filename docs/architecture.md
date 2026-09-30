@@ -61,3 +61,7 @@ unsupported workspace boundary, regardless of membership. These read-only checks
 assume metadata is not concurrently replaced; they do not execute application code,
 inspect lockfiles or configuration, or determine installation eligibility. The helper
 is not connected to CLI argument handling.
+
+The internal `package-manager.ts` helper consumes that resolved project and observes
+its `packageManager` declaration and known npm, pnpm, Yarn, and Bun lockfile names.
+It only detects the package manager and does not perform installations.
