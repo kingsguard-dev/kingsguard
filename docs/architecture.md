@@ -65,3 +65,11 @@ is not connected to CLI argument handling.
 The internal `package-manager.ts` helper consumes that resolved project and observes
 its `packageManager` declaration and known npm, pnpm, Yarn, and Bun lockfile names.
 It only detects the package manager and does not perform installations.
+
+The internal `installed-eslint.ts` observer reads only the ready project's
+`node_modules/eslint/package.json`, following package-directory links used by pnpm.
+It returns the exact installed SemVer and local lookup path, distinguishing absent,
+invalid, and inaccessible/broken installations. Metadata must be a regular file;
+no ESLint or configuration code runs. It neither searches ancestor/global packages
+nor judges compatibility, and is not wired into CLI commands. Like project
+resolution, observation assumes files are not concurrently replaced.
