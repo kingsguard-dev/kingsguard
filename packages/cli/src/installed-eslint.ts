@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { isMissingFileError } from './file-errors.js';
 import { join } from 'node:path';
 import semver from 'semver';
 import type { ReadyProject } from './project-root.js';
@@ -27,12 +28,6 @@ export type InstalledEslintResult =
 
 const eslintPackageName = 'eslint';
 
-function isMissingEntry(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null) return false;
-  if (!('code' in error)) return false;
-  return error.code === 'ENOENT';
-}
-
 type EslintMetadata = { name: typeof eslintPackageName; version: string };
 
 function isEslintMetadata(value: unknown): value is EslintMetadata {
@@ -55,7 +50,7 @@ export function observeInstalledEslint({
     fs.lstatSync(packagePath);
   } catch (error) {
     return {
-      status: isMissingEntry(error)
+      status: isMissingFileError(error)
         ? InstalledEslintStatus.NotInstalled
         : InstalledEslintStatus.IoError,
       manifestPath,
