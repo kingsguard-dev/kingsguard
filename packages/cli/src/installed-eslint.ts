@@ -1,8 +1,10 @@
 import fs from 'node:fs';
-import { isMissingFileError } from './file-errors.js';
 import { join } from 'node:path';
 import semver from 'semver';
+import { isMissingFileError } from './file-errors.js';
 import type { ReadyProject } from './project-root.js';
+
+const eslintPackageName = 'eslint';
 
 export enum InstalledEslintStatus {
   Found = 'found',
@@ -24,20 +26,15 @@ export type InstalledEslintResult =
         | InstalledEslintStatus.InvalidMetadata
         | InstalledEslintStatus.IoError;
       manifestPath: string;
+      reason?: string;
     };
-
-const eslintPackageName = 'eslint';
 
 type EslintMetadata = { name: typeof eslintPackageName; version: string };
 
 function isEslintMetadata(value: unknown): value is EslintMetadata {
-  if (typeof value !== 'object' || value === null || Array.isArray(value))
-    return false;
+  if (typeof value !== 'object' || value === null) return false;
   if (!('name' in value) || value.name !== eslintPackageName) return false;
   if (!('version' in value) || typeof value.version !== 'string') return false;
-  // semver accepts a leading v; require exact version syntax without coercion.
-  if (!/^[0-9]/u.test(value.version) || value.version.trim() !== value.version)
-    return false;
   return semver.valid(value.version) !== null;
 }
 
@@ -73,17 +70,22 @@ export function observeInstalledEslint({
     return { status: InstalledEslintStatus.IoError, manifestPath };
   }
 
+  let metadata: unknown;
   try {
-    const metadata: unknown = JSON.parse(text);
-    if (isEslintMetadata(metadata)) {
-      return {
-        status: InstalledEslintStatus.Found,
-        version: metadata.version,
-        manifestPath,
-      };
-    }
-  } catch {
-    // Invalid JSON is metadata failure, separate from filesystem access failures.
+    metadata = JSON.parse(text);
+  } catch (error) {
+    return {
+      status: InstalledEslintStatus.InvalidMetadata,
+      manifestPath,
+      reason: `Invalid JSON: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+  if (isEslintMetadata(metadata)) {
+    return {
+      status: InstalledEslintStatus.Found,
+      version: metadata.version,
+      manifestPath,
+    };
   }
   return { status: InstalledEslintStatus.InvalidMetadata, manifestPath };
 }

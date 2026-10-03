@@ -38,7 +38,15 @@ function observe() {
   return observeInstalledEslint({ project });
 }
 
-it.each(['0.0.0', '9.39.1', '99.0.0-rc.1+build.007'])(
+it.each([
+  '0.0.0',
+  '9.39.1',
+  '99.0.0-rc.1+build.007',
+  'v10.0.0',
+  ' 10.0.0',
+  '10.0.0 ',
+  '10.0.0\n',
+])(
   'observes exact npm version %s without compatibility judgment',
   (version) => {
     install({ name: 'eslint', version });
@@ -117,10 +125,7 @@ it.each([
     '',
     '10',
     '^10.0.0',
-    'v10.0.0',
     '=10.0.0',
-    ' 10.0.0',
-    '10.0.0\n',
     '01.0.0',
     '10.0.0-01',
     '10.0.0+',
@@ -130,10 +135,25 @@ it.each([
   expect(observe()).toEqual({ status: Status.InvalidMetadata, manifestPath });
 });
 
-it('distinguishes malformed JSON from I/O failures', () => {
+it('preserves the JSON parsing diagnostic without printing it', () => {
   install();
   fs.writeFileSync(manifestPath, '{');
-  expect(observe()).toEqual({ status: Status.InvalidMetadata, manifestPath });
+  const stderr = vi.spyOn(console, 'error');
+  const stdout = vi.spyOn(console, 'log');
+  let message = '';
+  try {
+    JSON.parse('{');
+  } catch (error) {
+    if (error instanceof Error) message = error.message;
+  }
+  expect(message).not.toBe('');
+  expect(observe()).toEqual({
+    status: Status.InvalidMetadata,
+    manifestPath,
+    reason: `Invalid JSON: ${message}`,
+  });
+  expect(stderr).not.toHaveBeenCalled();
+  expect(stdout).not.toHaveBeenCalled();
 });
 
 it.each(['EACCES', 'EIO', undefined, null, 'unexpected'])(

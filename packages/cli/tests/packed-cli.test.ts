@@ -9,9 +9,8 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { dirname, join, resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repositoryRoot = resolve(import.meta.dirname, '../../..');
@@ -54,33 +53,9 @@ describe('packed CLI', () => {
         packageOutput,
         readdirSync(packageOutput).find((file) => file.endsWith('.tgz'))!,
       );
-      // Provision the declared runtime dependency from pnpm's installed copy,
-      // so the packed consumer test needs neither network nor a warm npm cache.
-      const requireFromCli = createRequire(
-        join(packageDirectory, 'package.json'),
-      );
-      const dependencyOutput = join(temporaryDirectory, 'dependencies');
-      mkdirSync(dependencyOutput);
       run(
         'npm',
-        ['pack', '--ignore-scripts', '--pack-destination', dependencyOutput],
-        dirname(requireFromCli.resolve('semver/package.json')),
-      );
-      const dependencyTarball = join(
-        dependencyOutput,
-        readdirSync(dependencyOutput)[0]!,
-      );
-      run(
-        'npm',
-        [
-          'install',
-          '--ignore-scripts',
-          '--offline',
-          '--prefix',
-          installPrefix,
-          dependencyTarball,
-          tarball,
-        ],
+        ['install', '--ignore-scripts', '--prefix', installPrefix, tarball],
         temporaryDirectory,
       );
 

@@ -68,4 +68,6 @@ It only detects the package manager and does not perform installations.
 
 The internal `installed-eslint.ts` observer reads only the ready project's
 `node_modules/eslint/package.json`, following package-directory links used by pnpm.
-It observes version metadata without executing ESLint or judging compatibility.
+It validates version strings with semver and preserves their original text, without
+executing ESLint or judging compatibility. JSON parsing failures include a diagnostic
+reason for the caller.
