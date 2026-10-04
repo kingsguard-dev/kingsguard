@@ -3,6 +3,7 @@ import { ESLint } from 'eslint';
 import { defineConfig } from 'eslint/config';
 import * as parser from '@typescript-eslint/parser';
 import plugin from '../src/index.js';
+import packageJson from '../package.json' with { type: 'json' };
 
 it('works with the default JavaScript parser and preserves imperative focus', async () => {
   const eslint = new ESLint({
@@ -42,6 +43,7 @@ it('loads the React flat preset and reports through ESLint', async () => {
 });
 
 it('registers only the public guard names with matching documentation', () => {
+  expect(plugin.meta.version).toBe(packageJson.version);
   expect(plugin.meta.name).toBe('@kingsguard/eslint-plugin-sentinel-react');
   expect(Object.keys(plugin.configs)).toEqual(['recommended']);
   const names = ['no-dom-state', 'no-dom-query', 'no-computed-style'];
