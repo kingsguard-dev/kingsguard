@@ -67,6 +67,8 @@ See the [architecture notes](docs/architecture.md) before extending the project.
 ## Contributing
 
 Add a rule with valid and invalid cases, document its limits, and run `pnpm check`.
+See the [release preparation guide](docs/releasing.md) for recording changes and
+generating versions and changelogs before commit.
 Prefer evidence of framework ownership over broad API blacklists. Keep framework
 recognition in adapters and avoid introducing shared packages until there are
 multiple consumers. This initial scaffold has no publishing automation.
