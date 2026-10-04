@@ -23,5 +23,11 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "semver": "7.8.5"
+  },
+  "devDependencies": {
+    "@types/semver": "7.7.1"
   }
 }

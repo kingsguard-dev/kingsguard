@@ -9,13 +9,18 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { pathToFileURL } from 'node:url';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repositoryRoot = resolve(import.meta.dirname, '../../..');
 const packageDirectory = join(repositoryRoot, 'packages/cli');
 
-type InstalledManifest = { version: string; bin: Record<string, string> };
+type InstalledManifest = {
+  version: string;
+  bin: Record<string, string>;
+  dependencies: Record<string, string>;
+};
 
 function run(command: string, args: string[], cwd: string) {
   const result = capture(command, args, cwd);
@@ -50,14 +55,7 @@ describe('packed CLI', () => {
       );
       run(
         'npm',
-        [
-          'install',
-          '--ignore-scripts',
-          '--offline',
-          '--prefix',
-          installPrefix,
-          tarball,
-        ],
+        ['install', '--ignore-scripts', '--prefix', installPrefix, tarball],
         temporaryDirectory,
       );
 
@@ -74,6 +72,28 @@ describe('packed CLI', () => {
       const installedManifest = JSON.parse(
         readFileSync(join(installedPackage, 'package.json'), 'utf8'),
       ) as InstalledManifest;
+
+      expect(installedManifest.dependencies.semver).toBe('7.8.5');
+
+      const observerUrl = pathToFileURL(
+        join(installedPackage, 'dist/installed-eslint.js'),
+      ).href;
+      const observation = capture(
+        process.execPath,
+        [
+          '--input-type=module',
+          '-e',
+          `import { observeInstalledEslint } from ${JSON.stringify(observerUrl)};
+         console.log(JSON.stringify(observeInstalledEslint({ project: { root: ${JSON.stringify(callerDirectory)} } })));`,
+        ],
+        callerDirectory,
+      );
+      expect(observation.status).toBe(0);
+      expect(observation.stderr).toBe('');
+      expect(JSON.parse(observation.stdout)).toEqual({
+        status: 'not-installed',
+        manifestPath: join(callerDirectory, 'node_modules/eslint/package.json'),
+      });
 
       const help = capture(executable, ['--help'], callerDirectory);
       expect(help.status).toBe(0);

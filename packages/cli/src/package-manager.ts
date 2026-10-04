@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { isMissingFileError } from './file-errors.js';
 import { join } from 'node:path';
 import type { ReadyProject } from './project-root.js';
 
@@ -62,12 +63,6 @@ const lockfiles = [
 
 function isSupported(manager: unknown): manager is PackageManager {
   return manager === ManagerName.Npm || manager === ManagerName.Pnpm;
-}
-
-function isMissingFileError(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null) return false;
-  if (!('code' in error)) return false;
-  return error.code === 'ENOENT';
 }
 
 export function detectPackageManager({
