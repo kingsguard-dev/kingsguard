@@ -5,14 +5,12 @@ const testVersion = '9.8.7-test';
 
 function execute(args: string[]) {
   const stdout: string[] = [];
-  const stderr: string[] = [];
   const exitCode = runCli({
     args,
     stdout: (text) => stdout.push(text),
-    stderr: (text) => stderr.push(text),
     version: testVersion,
   });
-  return { exitCode, stdout: stdout.join(''), stderr: stderr.join('') };
+  return { exitCode, stdout: stdout.join('') };
 }
 
 describe('Kingsguard CLI entry', () => {
@@ -35,7 +33,6 @@ describe('Kingsguard CLI entry', () => {
     expect(result.stdout).toContain('--version  Show the CLI version');
     expect(result.stdout).not.toContain('init');
     expect(result.stdout).not.toContain(testVersion);
-    expect(result.stderr).toBe('');
   });
 
   it.each(
@@ -52,7 +49,6 @@ describe('Kingsguard CLI entry', () => {
     expect(execute(args)).toEqual({
       exitCode: 0,
       stdout: `${testVersion}\n`,
-      stderr: '',
     });
   });
 

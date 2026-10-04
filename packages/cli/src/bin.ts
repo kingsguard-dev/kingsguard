@@ -10,6 +10,5 @@ const version = parseVersion(
 process.exitCode = runCli({
   args: process.argv.slice(2),
   stdout: (text) => process.stdout.write(text),
-  stderr: (text) => process.stderr.write(text),
   version,
 });

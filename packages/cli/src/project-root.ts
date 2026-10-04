@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { isMissingFileError } from './file-errors.js';
 
 export type UnsupportedProject = {
   status: 'unsupported';
@@ -29,22 +30,13 @@ function unsupported(
   return { status: 'unsupported', reason, path };
 }
 
-function isMissing(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    error.code === 'ENOENT'
-  );
-}
-
 function metadata(path: string): 'absent' | 'regular' | UnsupportedProject {
   try {
     return fs.lstatSync(path).isFile()
       ? 'regular'
       : unsupported('unsafe-path', path);
   } catch (error) {
-    return isMissing(error) ? 'absent' : unsupported('io-error', path);
+    return isMissingFileError(error) ? 'absent' : unsupported('io-error', path);
   }
 }
 
@@ -89,7 +81,7 @@ export function resolveProjectRoot(
     }
   } catch (error) {
     return unsupported(
-      isMissing(error) ? 'unsafe-path' : 'io-error',
+      isMissingFileError(error) ? 'unsafe-path' : 'io-error',
       selectedPath,
     );
   }
