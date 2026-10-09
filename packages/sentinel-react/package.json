@@ -1,6 +1,6 @@
 {
   "name": "@kingsguard/eslint-plugin-sentinel-react",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.0",
   "description": "React ESLint rules for declarative UIs.",
   "license": "MIT",
   "type": "module",

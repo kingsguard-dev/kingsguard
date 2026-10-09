@@ -96,25 +96,28 @@ function lint(consumer, ext, mode, input, expectedIds) {
 
 const temporary = mkdtempSync(join(tmpdir(), 'sentinel-eslint-compat-'));
 try {
-  expectSuccess(
-    run(
-      'pnpm',
-      [
-        '--filter',
-        '@kingsguard/eslint-plugin-sentinel-react',
-        'pack',
-        '--pack-destination',
-        temporary,
-      ],
-      root,
-    ),
-    'pack Sentinel',
-  );
-  const tarballs = readdirSync(temporary).filter((file) =>
-    file.endsWith('.tgz'),
-  );
-  assert.equal(tarballs.length, 1, 'expected one packed Sentinel tarball');
-  const tarball = join(temporary, tarballs[0]);
+  let tarball = process.argv[2] && resolve(process.argv[2]);
+  if (!tarball) {
+    expectSuccess(
+      run(
+        'pnpm',
+        [
+          '--filter',
+          '@kingsguard/eslint-plugin-sentinel-react',
+          'pack',
+          '--pack-destination',
+          temporary,
+        ],
+        root,
+      ),
+      'pack Sentinel',
+    );
+    const tarballs = readdirSync(temporary).filter((file) =>
+      file.endsWith('.tgz'),
+    );
+    assert.equal(tarballs.length, 1, 'expected one packed Sentinel tarball');
+    tarball = join(temporary, tarballs[0]);
+  }
 
   for (const version of versions) {
     const consumer = join(temporary, `eslint-${version}`);
@@ -135,6 +138,8 @@ try {
           `eslint@${version}`,
           '@typescript-eslint/parser@8.70.0',
           'typescript@5.9.3',
+          '@types/node@22.20.4',
+          ...(version.startsWith('8.') ? ['@types/eslint@8.56.12'] : []),
           tarball,
         ],
         consumer,
@@ -175,6 +180,35 @@ try {
     assert.equal(typescript.version, '5.9.3');
 
     writeFileSync(
+      join(consumer, 'consumer.mts'),
+      `import sentinel from '@kingsguard/eslint-plugin-sentinel-react';
+import type { Linter } from 'eslint';
+const config: Linter.FlatConfig[] = [sentinel.configs.recommended];
+const version: string = sentinel.meta.version;
+export { config, version };
+`,
+    );
+    expectSuccess(
+      run(
+        process.execPath,
+        [
+          'node_modules/typescript/bin/tsc',
+          '--noEmit',
+          '--strict',
+          '--module',
+          'NodeNext',
+          '--moduleResolution',
+          'NodeNext',
+          '--target',
+          'ES2022',
+          'consumer.mts',
+        ],
+        consumer,
+      ),
+      `declaration consumption with ESLint ${version}`,
+    );
+
+    writeFileSync(
       join(consumer, 'eslint.config.mjs'),
       `import sentinel from '@kingsguard/eslint-plugin-sentinel-react';
 import * as parser from '@typescript-eslint/parser';
@@ -197,14 +231,32 @@ export default [
         .replace("  document.querySelector('#example');\n", '')
         .replace('  getComputedStyle(ref.current);\n', '');
       lint(consumer, ext, 'error', allowed, []);
-      const suppressed = source.replace(
+      const violations = [
         '  ref.current.hidden = true;',
-        `  // eslint-disable-next-line ${ids[0]} -- legacy widget boundary\n  ref.current.hidden = true;`,
+        "  document.querySelector('#example');",
+        '  getComputedStyle(ref.current);',
+      ];
+      for (const [index, violation] of violations.entries()) {
+        const suppressed = source.replace(
+          violation,
+          `  // eslint-disable-next-line ${ids[index]} -- legacy widget boundary\n${violation}`,
+        );
+        lint(
+          consumer,
+          ext,
+          'error',
+          suppressed,
+          ids.filter((_, i) => i !== index),
+        );
+      }
+      const alias = source.replace(
+        '  ref.current.hidden = true;',
+        '  const node = ref.current;\n  node.hidden = true;\n  node.focus();',
       );
-      lint(consumer, ext, 'error', suppressed, ids.slice(1));
+      lint(consumer, ext, 'error', alias, ids);
     }
     console.log(
-      `Node ${process.version}; ESLint ${eslint.version}; parser ${parser.version}; TypeScript ${typescript.version}; Sentinel ${installed.version}: 10 CLI cases passed`,
+      `Node ${process.version}; ESLint ${eslint.version}; parser ${parser.version}; TypeScript ${typescript.version}; Sentinel ${installed.version}: 16 CLI cases passed`,
     );
   }
 } finally {

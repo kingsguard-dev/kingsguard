@@ -22,7 +22,7 @@ const plugin = {
       ESLint.Plugin['rules']
     >[string],
   },
-  configs: {} as { recommended: Linter.Config },
+  configs: {} as { recommended: Linter.FlatConfig },
 };
 
 plugin.configs.recommended = {
