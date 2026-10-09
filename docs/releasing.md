@@ -15,11 +15,12 @@ React plugin metadata reads its version directly from its package manifest. Thes
 command names are stable entry points; their underlying tool can change later.
 
 Preparation uses all pending Changesets. For React-only releases, manually move
-CLI-only records outside `.changeset` and keep them there until the CLI is
+CLI-only records into `.changeset-deferred/` and keep them there until the CLI is
 intentionally included in a release. Apply this to newly added CLI records before
 each preparation too; do not restore deferred records after the first beta.
 Preserve them for the eventual CLI release. Review any record covering both
-packages separately before proceeding.
+packages separately before proceeding. Commit the deferred records so they remain
+available to other maintainers; Changesets does not process that directory.
 
 The initial beta is a one-time preparation: set the unpublished React package's
 version baseline to `0.0.0`, retain its minor release record, then run:
