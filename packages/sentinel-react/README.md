@@ -2,31 +2,40 @@
 
 React ESLint rules for declarative UIs, part of Kingsguard.
 
-## Local setup
+## Installation
 
-This package is an unpublished scaffold. From the repository root:
+The first beta is `0.1.0-beta.0`. Once it is published, install it into a project
+with a working ESLint flat configuration:
 
 ```sh
-pnpm install
-pnpm build
-pnpm --filter @kingsguard/eslint-plugin-sentinel-react pack
+npm install --save-dev @kingsguard/eslint-plugin-sentinel-react@0.1.0-beta.0
 ```
 
-Install the generated tarball into a consuming project with ESLint 8.57+, 9, or 10
+To test a release candidate before publication, install the supplied tarball instead:
+
+```sh
+npm install --save-dev /absolute/path/to/kingsguard-eslint-plugin-sentinel-react-0.1.0-beta.0.tgz
+```
+
+Use ESLint 8.57+, 9, or 10
 and a compatible TypeScript version (currently `>=4.8.4 <6.1.0`). The supported
 ESLint range is for flat config only; the packed package is checked with ESLint
 8.57.0, 8.57.1, 9.39.5, and 10.10.0 on Node 22 and 24. The package is ESM-only
-and requires Node.js 22.12+.
+and requires Node.js 22.12+. Your ESLint and parser versions may require a newer
+Node.js version. Keep the parser and other settings from your working configuration
+when adding Sentinel; it does not set up ESLint for you.
+
+Append `sentinel.configs.recommended` to your existing configuration array:
 
 ```js
-// eslint.config.js (ES module)
+// eslint.config.mjs
 import sentinel from '@kingsguard/eslint-plugin-sentinel-react';
 
 export default [sentinel.configs.recommended];
 ```
 
-For TypeScript/TSX, install `typescript-eslint` in the consuming project and use
-its parser through the recommended configuration:
+For TypeScript/TSX, keep your existing TypeScript parser setup. For example, a
+project using `typescript-eslint` can append Sentinel after its configuration:
 
 ```js
 import tseslint from 'typescript-eslint';
@@ -49,7 +58,10 @@ checks this explicit flat-config path rather than default config discovery.
 The React preset belongs to this plugin; it does not require separate
 `@kingsguard/core` or `@kingsguard/axe` packages.
 
-Run `pnpm exec eslint .` to check your project. Violations fail lint and CI by
+For TypeScript code that imports Sentinel's declarations with ESLint 8, also
+install `@types/eslint@8`. ESLint 9 and 10 include their own declarations.
+
+Run `npx eslint .` to check your project. Violations fail lint and CI by
 default. For gradual adoption, override selected rules to `warn` in a later
 flat-config entry, or use `off` to disable a rule:
 
