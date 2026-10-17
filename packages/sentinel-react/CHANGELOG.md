@@ -1,5 +1,11 @@
 # @kingsguard/eslint-plugin-sentinel-react
 
+## 0.1.0-beta.1
+
+### Patch Changes
+
+- Rewrite the README for the first public release, with current beta installation, configuration, rule guidance, and detection limits. Remove unpublished migration history and release-candidate instructions.
+
 ## 0.1.0-beta.0
 
 ### Minor Changes

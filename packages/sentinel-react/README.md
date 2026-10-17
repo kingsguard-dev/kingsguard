@@ -1,69 +1,112 @@
 # Sentinel React
 
-React ESLint rules for declarative UIs, part of Kingsguard.
+ESLint rules that help keep React UI state declarative. Sentinel is part of
+[Kingsguard](https://github.com/kingsguard-dev/kingsguard).
+
+Use React state and props to describe the UI, and refs for necessary imperative
+operations such as focus, scrolling, and measurement.
 
 ## Installation
 
-The first beta is `0.1.0-beta.0`. Once it is published, install it into a project
-with a working ESLint flat configuration:
+Install the beta into a project with a working ESLint flat configuration:
 
 ```sh
-npm install --save-dev @kingsguard/eslint-plugin-sentinel-react@0.1.0-beta.0
+npm install --save-dev @kingsguard/eslint-plugin-sentinel-react@beta
 ```
 
-To test a release candidate before publication, install the supplied tarball instead:
+Requirements:
 
-```sh
-npm install --save-dev /absolute/path/to/kingsguard-eslint-plugin-sentinel-react-0.1.0-beta.0.tgz
-```
+- Node.js 22.12 or newer.
+- ESLint `^8.57.0`, `^9.0.0`, or `^10.0.0` with flat configuration.
+- TypeScript `>=4.8.4 <6.1.0` as a peer dependency. Type-aware linting is not required.
 
-Use ESLint 8.57+, 9, or 10
-and a compatible TypeScript version (currently `>=4.8.4 <6.1.0`). The supported
-ESLint range is for flat config only; the packed package is checked with ESLint
-8.57.0, 8.57.1, 9.39.5, and 10.10.0 on Node 22 and 24. The package is ESM-only
-and requires Node.js 22.12+. Your ESLint and parser versions may require a newer
-Node.js version. Keep the parser and other settings from your working configuration
-when adding Sentinel; it does not set up ESLint for you.
+The package is ESM-only. Your ESLint and parser versions may require a newer
+Node.js version. No React runtime dependency is required by the plugin.
 
-Append `sentinel.configs.recommended` to your existing configuration array:
+## Configuration
+
+Append `sentinel.configs.recommended` to your existing configuration array.
+Keep your existing parser, file patterns, and other settings; Sentinel does not
+set up ESLint for you.
 
 ```js
 // eslint.config.mjs
 import sentinel from '@kingsguard/eslint-plugin-sentinel-react';
 
-export default [sentinel.configs.recommended];
+export default [
+  // Your existing configuration entries go here.
+  sentinel.configs.recommended,
+];
 ```
 
-For TypeScript/TSX, keep your existing TypeScript parser setup. For example, a
-project using `typescript-eslint` can append Sentinel after its configuration:
+For TypeScript/TSX, retain your TypeScript parser configuration. For example,
+a project already using `typescript-eslint` can configure:
 
 ```js
+// eslint.config.mjs
 import tseslint from 'typescript-eslint';
 import sentinel from '@kingsguard/eslint-plugin-sentinel-react';
 
 export default [...tseslint.configs.recommended, sentinel.configs.recommended];
 ```
 
-The flat React preset enables all three rules at error severity:
+Run ESLint to check your project:
 
-- `@kingsguard/react/no-dom-state`
-- `@kingsguard/react/no-dom-query`
-- `@kingsguard/react/no-computed-style`
+```sh
+npx eslint .
+```
 
-No type-aware linting or React runtime dependency is required.
-Legacy `.eslintrc` configuration and plugin loading are not supported. Use the
-flat preset `sentinel.configs.recommended`. For ESLint 8, set
-`ESLINT_USE_FLAT_CONFIG=true` when invoking ESLint; the compatibility matrix
-checks this explicit flat-config path rather than default config discovery.
-The React preset belongs to this plugin; it does not require separate
-`@kingsguard/core` or `@kingsguard/axe` packages.
+Legacy `.eslintrc` configuration is not supported. With ESLint 8, set
+`ESLINT_USE_FLAT_CONFIG=true` when invoking ESLint. TypeScript code importing the
+plugin's declarations with ESLint 8 also needs `@types/eslint@8`; ESLint 9 and 10
+include their own declarations.
 
-For TypeScript code that imports Sentinel's declarations with ESLint 8, also
-install `@types/eslint@8`. ESLint 9 and 10 include their own declarations.
+## Rules
 
-Run `npx eslint .` to check your project. Violations fail lint and CI by
-default. For gradual adoption, override selected rules to `warn` in a later
-flat-config entry, or use `off` to disable a rule:
+The recommended preset registers the `@kingsguard/react` namespace and enables
+all three rules at error severity:
+
+| Rule                                                                                                          | Purpose                                                                    |
+| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [`no-dom-state`](https://github.com/kingsguard-dev/kingsguard/blob/main/docs/rules/no-dom-state.md)           | Keep React-owned DOM state in JSX props and React state.                   |
+| [`no-dom-query`](https://github.com/kingsguard-dev/kingsguard/blob/main/docs/rules/no-dom-query.md)           | Prefer React refs over browser document queries.                           |
+| [`no-computed-style`](https://github.com/kingsguard-dev/kingsguard/blob/main/docs/rules/no-computed-style.md) | Keep UI state in React state and props instead of reading computed styles. |
+
+### React DOM refs
+
+`no-dom-state` checks React refs attached to native JSX elements and direct
+`const node = ref.current` aliases within their declaring function. It allows
+built-in operations for focus, scrolling, selection, measurement, and playback;
+scalar geometry/scroll reads; and scroll-position writes. Other direct member
+reads, calls, and writes report. Ordinary data refs remain outside this rule.
+
+For example, control visibility through JSX rather than writing to a DOM ref:
+
+```jsx
+// Reported when ref is a recognized React DOM ref:
+ref.current.hidden = !visible;
+
+// Express visibility in JSX instead:
+<div hidden={!visible} />;
+```
+
+### Browser APIs
+
+`no-dom-query` reports browser document `getElementById`, `querySelector`, and
+`querySelectorAll` accesses, including method retrieval and direct static
+destructuring.
+
+`no-computed-style` reports browser `getComputedStyle` reads, captured references,
+and direct static extraction.
+
+Both browser API rules apply throughout enabled files, including files without
+React imports or JSX. Local bindings that shadow browser globals remain allowed.
+Effects and SDK calls are not automatic exemptions.
+
+## Severity and exceptions
+
+Violations fail lint and CI by default. For gradual adoption, override individual
+rules to `warn` or `off` in a later flat-config entry:
 
 ```js
 import sentinel from '@kingsguard/eslint-plugin-sentinel-react';
@@ -80,69 +123,33 @@ export default [
 ];
 ```
 
-## DOM-ref operation guard
+For a necessary exception, suppress the specific rule at the affected location
+and explain why:
 
-For a React ref attached to a native JSX element, Sentinel allows only its
-built-in operations: direct focus, scrolling, selection, measurement and playback
-calls; scalar geometry/scroll reads; and scroll-position writes. Other direct
-member reads, calls, and writes report. Prefer JSX props derived from React
-state. Ordinary data refs remain outside this DOM-ref rule.
-Direct `const node = ref.current` aliases are checked in their declaring function.
+```js
+// eslint-disable-next-line @kingsguard/react/no-dom-state -- Required by this widget's integration contract.
+ref.current.dataset.widgetMode = mode;
+```
 
-See the [full rule documentation](https://github.com/kingsguard-dev/kingsguard/blob/main/docs/rules/no-dom-state.md)
-for exact coverage, exceptions, and limitations. No automatic fix is offered.
+## Limitations
 
-## Browser document queries
+Detection is based on syntax and lexical scope, not runtime types or full data
+flow. DOM-ref recognition requires a direct React `useRef` or `createRef` binding
+attached to a native JSX element in the same file. Ref-object aliases, node alias
+chains, callback refs, and node aliases used inside nested functions are not
+tracked. Refs attached only to custom components do not establish DOM ownership.
 
-`no-dom-query` reports browser document `getElementById`,
-`querySelector`, and `querySelectorAll` accesses, including method retrieval and
-direct static destructuring. It applies throughout enabled files, including files
-without React imports or JSX. Local bindings shadowing browser globals remain
-allowed. Prefer React refs for element access; effects and SDK calls are not
-automatic exemptions.
+The rules do not detect every DOM operation. Undetected patterns are detection
+gaps, not approved usage. See the linked rule documentation for exact allowed
+operations, supported syntax, and remaining boundaries.
 
-See [query rule coverage and limitations](https://github.com/kingsguard-dev/kingsguard/blob/main/docs/rules/no-dom-query.md)
-for supported receivers, detection gaps, severity configuration, and explained
-ESLint suppressions. No autofix or custom rule options are provided.
+There are no automatic fixes, custom rule options, or configurable operation
+allow lists. Moving imperative code into React state and JSX can change behavior
+and requires an intentional component change.
 
-## Computed-style guard
+Packed-package compatibility is checked with ESLint 8.57.0, 8.57.1, 9.39.5, and
+10.10.0 on Node.js 22 and 24.
 
-The React preset also enables
-`@kingsguard/react/no-computed-style` at error severity.
-It reports browser `getComputedStyle` reads, captured references, and direct static
-extraction in every file scope, including files without React imports or JSX.
-Prefer React state and props as the source of UI state. Local functions and objects
-that shadow browser globals are exempt. See the
-[computed-style rule documentation](https://github.com/kingsguard-dev/kingsguard/blob/main/docs/rules/no-computed-style.md)
-for detection boundaries, configuration, and explained ESLint suppression.
+## License
 
-## Updating rule names
-
-If you used an earlier unpublished build, update explicit rule settings and
-ESLint suppression comments using this mapping. Previous IDs are no longer
-registered.
-
-| Previous rule ID                                              | New rule ID                           |
-| ------------------------------------------------------------- | ------------------------------------- |
-| `@kingsguard/sentinel/react-no-imperative-dom-state`          | `@kingsguard/react/no-dom-state`      |
-| `@kingsguard/sentinel/react-prefer-ref-over-dom-query`        | `@kingsguard/react/no-dom-query`      |
-| `@kingsguard/sentinel/react-prefer-state-over-computed-style` | `@kingsguard/react/no-computed-style` |
-
-If you already adopted the short rule names under `@kingsguard/sentinel/`, replace
-that prefix with `@kingsguard/react/`. If you register the plugin manually, use
-`plugins: { '@kingsguard/react': sentinel }`.
-
-The React package is `@kingsguard/eslint-plugin-sentinel-react`.
-`sentinel.configs.recommended` registers the new namespace and enables all three rules
-as errors automatically.
-
-## Updating the package and preset
-
-Earlier unpublished builds used `@kingsguard/eslint-plugin-sentinel` and
-`sentinel.configs.react`. Install `@kingsguard/eslint-plugin-sentinel-react`,
-update the import, and use `sentinel.configs.recommended` instead. The old package
-and preset are not provided as compatibility aliases.
-
-The `@kingsguard/react` namespace and its three rule IDs are unchanged.
-Each future framework integration will have its own package; this package
-contains only React support.
+[MIT](https://github.com/kingsguard-dev/kingsguard/blob/main/LICENSE).
