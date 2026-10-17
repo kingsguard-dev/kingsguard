@@ -1,6 +1,4 @@
 pnpm-lock.yaml
 dist/
 coverage/
-.beads/embeddeddolt/
-.beads/dolt/
-.beads/backup/
+.beads/*
